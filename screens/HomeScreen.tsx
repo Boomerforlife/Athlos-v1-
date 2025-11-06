@@ -46,7 +46,19 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user }) => {
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
   const [suggestedFriends, setSuggestedFriends] = useState<any[]>([]);
   const [currentSteps, setCurrentSteps] = useState(0);
-  const [goalSteps, setGoalSteps] = useState(user?.dailyStepGoal || 6000);
+  const [goalSteps, setGoalSteps] = useState(() => {
+    // Initialize from localStorage first, then fallback to user prop, then default
+    const storedUser = localStorage.getItem('athlos_user');
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        return parsedUser.dailyStepGoal || user?.dailyStepGoal || 6000;
+      } catch (error) {
+        console.error('Error parsing stored user data:', error);
+      }
+    }
+    return user?.dailyStepGoal || 6000;
+  });
   const [isLoading, setIsLoading] = useState(true);
 
   const progress = Math.min((currentSteps / goalSteps) * 100, 100);
@@ -57,17 +69,108 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user }) => {
     );
   }, [friendSearchTerm]);
 
+  // Update goalSteps when user data changes
+  useEffect(() => {
+    // Check both user prop and localStorage for the most up-to-date goal
+    const storedUser = localStorage.getItem('athlos_user');
+    let newGoal = user?.dailyStepGoal || 6000;
+    
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        if (parsedUser.dailyStepGoal) {
+          newGoal = parsedUser.dailyStepGoal;
+        }
+      } catch (error) {
+        console.error('Error parsing stored user data:', error);
+      }
+    }
+    
+    console.log('Current goalSteps:', goalSteps, 'New goal from data:', newGoal);
+    if (newGoal !== goalSteps) {
+      console.log('Updating goal to:', newGoal);
+      setGoalSteps(newGoal);
+    }
+  }, [user?.dailyStepGoal]); // Removed goalSteps from dependency to prevent infinite loop
+
+  // Check localStorage on mount for immediate goal update
+  useEffect(() => {
+    const storedUser = localStorage.getItem('athlos_user');
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        if (parsedUser.dailyStepGoal && parsedUser.dailyStepGoal !== goalSteps) {
+          console.log('Mount: Updating goal from localStorage:', parsedUser.dailyStepGoal);
+          setGoalSteps(parsedUser.dailyStepGoal);
+        }
+      } catch (error) {
+        console.error('Error parsing stored user data on mount:', error);
+      }
+    }
+  }, []); // Run only on mount
+
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Load leaderboard data
-        const leaderboard = await apiService.getDailyLeaderboard();
-        setLeaderboardData(leaderboard);
+        // Load fake leaderboard data for MVP demo
+        const fakeLeaderboardData = [
+          {
+            userId: 1,
+            name: "Madhavi",
+            avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face",
+            totalSteps: 12500,
+            rank: 1,
+            totalDistance: 8.2,
+            territoriesClaimed: 3
+          },
+          {
+            userId: 2,
+            name: "Rohan",
+            avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
+            totalSteps: 11800,
+            rank: 2,
+            totalDistance: 7.8,
+            territoriesClaimed: 2
+          },
+          {
+            userId: 3,
+            name: "Ridhi",
+            avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
+            totalSteps: 10900,
+            rank: 3,
+            totalDistance: 7.1,
+            territoriesClaimed: 2
+          },
+          {
+            userId: 4,
+            name: "Devyanshi",
+            avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face",
+            totalSteps: 9750,
+            rank: 4,
+            totalDistance: 6.4,
+            territoriesClaimed: 1
+          },
+          {
+            userId: 5,
+            name: "Arjun",
+            avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
+            totalSteps: 8900,
+            rank: 5,
+            totalDistance: 5.8,
+            territoriesClaimed: 1
+          }
+        ];
+        setLeaderboardData(fakeLeaderboardData);
         
-        // Load suggested friends (exclude current user if available)
-        const friends = await apiService.searchUsers('');
-        const filtered = user ? friends.filter((u: any) => u.id !== user.id) : friends;
-        setSuggestedFriends(filtered.slice(0, 5));
+        // Load fake suggested friends data
+        const fakeFriendsData = [
+          { id: 6, name: "Priya", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face" },
+          { id: 7, name: "Karan", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face" },
+          { id: 8, name: "Sneha", avatar: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=150&h=150&fit=crop&crop=face" },
+          { id: 9, name: "Vikram", avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&h=150&fit=crop&crop=face" },
+          { id: 10, name: "Ananya", avatar: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=150&h=150&fit=crop&crop=face" }
+        ];
+        setSuggestedFriends(fakeFriendsData);
         
         // Calculate user's current steps from today's runs
         if (user && user.id) {
@@ -120,61 +223,102 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user }) => {
       attribution: '&copy; Google Maps'
     }).addTo(map);
 
-    // Load real territories from backend
-    const loadTerritories = async () => {
-      try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8080/api'}/territories/active`);
-        const territories = await response.json();
-        
-        if (Array.isArray(territories)) {
-          territories.forEach((territory: any) => {
-            if (territory.polygon) {
-              // Convert GeoJSON-like coordinates to LatLng array
-              const coordinates = territory.polygon.coordinates || territory.polygon;
-              if (Array.isArray(coordinates) && coordinates.length > 0) {
-                // Handle different coordinate formats
-                let latLngs: [number, number][] = [];
-                if (coordinates[0] && Array.isArray(coordinates[0][0])) {
-                  // GeoJSON format: [[[lon,lat], ...]]
-                  latLngs = coordinates[0].map((coord: number[]) => [coord[1], coord[0]]);
-                } else if (Array.isArray(coordinates[0])) {
-                  // Simple format: [[lon,lat], ...]
-                  latLngs = coordinates.map((coord: number[]) => [coord[1], coord[0]]);
-                }
-                
-                if (latLngs.length > 2) {
-                  (window as any).L.polygon(latLngs, {
-                    color: '#22c55e',
-                    fillColor: '#22c55e',
-                    fillOpacity: 0.25,
-                    weight: 2
-                  }).addTo(map);
-                }
-              }
-            }
-          });
+    // Load fake territories for MVP demo
+    const loadTerritories = () => {
+      // Fake territories around SRM KTR campus for demo
+      const fakeTerritoriesData = [
+        {
+          name: "Main Campus",
+          owner: "Madhavi",
+          coordinates: [
+            [12.8225, 80.0440],
+            [12.8235, 80.0440],
+            [12.8235, 80.0450],
+            [12.8225, 80.0450]
+          ],
+          color: '#ef4444'
+        },
+        {
+          name: "Sports Complex",
+          owner: "Rohan",
+          coordinates: [
+            [12.8240, 80.0445],
+            [12.8250, 80.0445],
+            [12.8250, 80.0455],
+            [12.8240, 80.0455]
+          ],
+          color: '#3b82f6'
+        },
+        {
+          name: "Library Area",
+          owner: "Ridhi",
+          coordinates: [
+            [12.8220, 80.0455],
+            [12.8230, 80.0455],
+            [12.8230, 80.0465],
+            [12.8220, 80.0465]
+          ],
+          color: '#8b5cf6'
+        },
+        {
+          name: "Hostel Block",
+          owner: "Devyanshi",
+          coordinates: [
+            [12.8245, 80.0435],
+            [12.8255, 80.0435],
+            [12.8255, 80.0445],
+            [12.8245, 80.0445]
+          ],
+          color: '#f59e0b'
+        },
+        {
+          name: "Food Court",
+          owner: "Arjun",
+          coordinates: [
+            [12.8215, 80.0445],
+            [12.8225, 80.0445],
+            [12.8225, 80.0455],
+            [12.8215, 80.0455]
+          ],
+          color: '#10b981'
         }
-      } catch (error) {
-        console.error('Error loading territories:', error);
-      }
+      ];
+
+      fakeTerritoriesData.forEach((territory) => {
+        const polygon = (window as any).L.polygon(territory.coordinates, {
+          color: territory.color,
+          fillColor: territory.color,
+          fillOpacity: 0.3,
+          weight: 2
+        }).addTo(map);
+        
+        // Add popup with territory info
+        polygon.bindPopup(`
+          <div style="text-align: center;">
+            <strong>${territory.name}</strong><br/>
+            <span style="color: ${territory.color};">Claimed by ${territory.owner}</span>
+          </div>
+        `);
+      });
     };
     
     loadTerritories();
   }, []);
 
-  useEffect(() => {
-    // Connect to WebSocket for real-time updates
-    websocketService.connect().then(() => {
-      websocketService.subscribeToDailyLeaderboard((data) => {
-        setLeaderboardData(data);
-      });
-      websocketService.requestDailyLeaderboard();
-    });
+  // Disabled WebSocket for MVP demo
+  // useEffect(() => {
+  //   // Connect to WebSocket for real-time updates
+  //   websocketService.connect().then(() => {
+  //     websocketService.subscribeToDailyLeaderboard((data) => {
+  //       setLeaderboardData(data);
+  //     });
+  //     websocketService.requestDailyLeaderboard();
+  //   });
 
-    return () => {
-      websocketService.disconnect();
-    };
-  }, []);
+  //   return () => {
+  //     websocketService.disconnect();
+  //   };
+  // }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

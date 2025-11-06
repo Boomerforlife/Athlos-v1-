@@ -170,9 +170,15 @@ const GoalSettingScreen: React.FC<GoalSettingScreenProps> = ({ onNavigate, user,
                 }
                 
                 localStorage.setItem('athlos_user', JSON.stringify(updatedUser));
+                console.log('Goal saved successfully:', updatedUser.dailyStepGoal);
+                console.log('Updated user stored in localStorage:', updatedUser);
+                // Mark goal setting as completed for this user
+                localStorage.setItem(`athlos_goal_completed_${user.id}`, 'true');
                 onNavigate('home');
               } catch (error) {
                 console.error('Error saving goal:', error);
+                // Mark as completed even on error to avoid infinite loop
+                localStorage.setItem(`athlos_goal_completed_${user.id}`, 'true');
                 // Navigate anyway on error
                 onNavigate('home');
               } finally {

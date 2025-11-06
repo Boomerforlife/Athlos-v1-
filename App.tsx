@@ -24,12 +24,24 @@ const App: React.FC = () => {
 
   const handleUserLogin = (userData: User) => {
     setUser(userData);
-    // Skip Personal Info for now; go straight to Home after auth
-    setScreen('home');
+    // Check if user has completed goal setting onboarding
+    const hasCompletedGoalSetting = localStorage.getItem(`athlos_goal_completed_${userData.id}`);
+    
+    if (!hasCompletedGoalSetting) {
+      // User hasn't completed goal setting yet, go to goal setting
+      setScreen('goalsetting');
+    } else {
+      // User has completed goal setting, go to home
+      setScreen('home');
+    }
   };
 
   const handleUserLogout = () => {
     apiService.logout();
+    // Clear goal completion flag for the current user
+    if (user?.id) {
+      localStorage.removeItem(`athlos_goal_completed_${user.id}`);
+    }
     setUser(null);
     localStorage.removeItem('athlos_user');
     localStorage.removeItem('athlos_token');

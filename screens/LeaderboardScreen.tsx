@@ -26,20 +26,80 @@ const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ onNavigate, user 
     const loadLeaderboard = async () => {
       try {
         setIsLoading(true);
+        
+        // Fake leaderboard data for MVP demo
+        const baseFakeData = [
+          {
+            userId: 1,
+            name: "Madhavi",
+            avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face",
+            totalSteps: 12500,
+            rank: 1,
+            totalDistance: 8.2,
+            territoriesClaimed: 3
+          },
+          {
+            userId: 2,
+            name: "Rohan",
+            avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
+            totalSteps: 11800,
+            rank: 2,
+            totalDistance: 7.8,
+            territoriesClaimed: 2
+          },
+          {
+            userId: 3,
+            name: "Ridhi",
+            avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
+            totalSteps: 10900,
+            rank: 3,
+            totalDistance: 7.1,
+            territoriesClaimed: 2
+          },
+          {
+            userId: 4,
+            name: "Devyanshi",
+            avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face",
+            totalSteps: 9750,
+            rank: 4,
+            totalDistance: 6.4,
+            territoriesClaimed: 1
+          },
+          {
+            userId: 5,
+            name: "Arjun",
+            avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
+            totalSteps: 8900,
+            rank: 5,
+            totalDistance: 5.8,
+            territoriesClaimed: 1
+          }
+        ];
+
         let data: LeaderboardEntry[];
         
         switch (activeTab) {
           case 'daily':
-            data = await apiService.getDailyLeaderboard();
+            data = baseFakeData;
             break;
           case 'weekly':
-            data = await apiService.getWeeklyLeaderboard();
+            // Multiply by 7 for weekly data
+            data = baseFakeData.map(entry => ({
+              ...entry,
+              totalSteps: entry.totalSteps * 7,
+              totalDistance: entry.totalDistance ? entry.totalDistance * 7 : undefined
+            }));
             break;
           case 'all-time':
-            data = await apiService.getAllTimeLeaderboard();
+            // Multiply by 30 for all-time data
+            data = baseFakeData.map(entry => ({
+              ...entry,
+              totalSteps: entry.totalSteps * 30,
+              totalDistance: entry.totalDistance ? entry.totalDistance * 30 : undefined
+            }));
             break;
           default:
-            data = await apiService.getDailyLeaderboard();
+            data = baseFakeData;
         }
         
         setLeaderboardData(data);

@@ -14,7 +14,13 @@ public class CorsConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.asList("http://localhost:3000", "http://localhost:5173"));
+        configuration.setAllowedOrigins(Arrays.asList(
+            "http://localhost:3000", 
+            "http://localhost:5173",
+            "https://*.netlify.app",
+            "https://*.vercel.app",
+            "http://10.3.146.33:3000"
+        ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
