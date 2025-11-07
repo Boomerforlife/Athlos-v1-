@@ -19,7 +19,7 @@ public class CorsConfig {
             "http://localhost:5173",
             "https://*.netlify.app",
             "https://*.vercel.app",
-            "http://10.3.146.33:3000"
+            "http://10.9.166.197:3000"
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
